@@ -15,20 +15,29 @@ export default function Dashboard() {
   const [devices, setDevices] = useState<Record<string, DeviceInfo>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [now, setNow] = useState<number | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
 
   const loadDevices = useCallback(async () => {
     try {
       const res = await fetch('/api/data', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Device API returned ${res.status}`);
       const data = await res.json();
       setDevices(data);
+      const timestamp = Date.now();
+      setNow(timestamp);
+      setUpdatedAt(timestamp);
     } catch {}
     finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
-    loadDevices();
-    const interval = setInterval(loadDevices, 10000);
-    return () => clearInterval(interval);
+    const initialLoad = window.setTimeout(() => { void loadDevices(); }, 0);
+    const interval = window.setInterval(() => { void loadDevices(); }, 10000);
+    return () => {
+      window.clearTimeout(initialLoad);
+      window.clearInterval(interval);
+    };
   }, [loadDevices]);
 
   const filtered = Object.entries(devices).filter(([id, d]) =>
@@ -37,7 +46,9 @@ export default function Dashboard() {
     id.toLowerCase().includes(search.toLowerCase())
   );
 
-  const onlineCount = Object.values(devices).filter(d => d.lastSeen && Date.now() - d.lastSeen < 300000).length;
+  const isOnline = (device: DeviceInfo) =>
+    now !== null && Boolean(device.lastSeen && now - device.lastSeen < 300000);
+  const onlineCount = Object.values(devices).filter(isOnline).length;
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#e0e0e0', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
@@ -78,10 +89,10 @@ export default function Dashboard() {
           )}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
             {Object.entries(devices).map(([uuid, info]) => {
-              const isOnline = info.lastSeen && Date.now() - info.lastSeen < 300000;
+              const isDeviceOnline = isOnline(info);
               return (
                 <div key={uuid} style={{
-                  border: `1px solid ${isOnline ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                  border: `1px solid ${isDeviceOnline ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.06)'}`,
                   borderRadius: 12,
                   padding: 18,
                   width: 260,
@@ -91,7 +102,7 @@ export default function Dashboard() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                     <code style={{ color: '#0ea5e9', fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: 5 }}>{uuid}</code>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: isOnline ? '#22c55e' : '#6b7280', boxShadow: isOnline ? '0 0 8px #22c55eaa' : 'none' }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: isDeviceOnline ? '#22c55e' : '#6b7280', boxShadow: isDeviceOnline ? '0 0 8px #22c55eaa' : 'none' }} />
                   </div>
                   <div style={{ fontSize: 13, lineHeight: 1.7 }}>
                     <p><span style={{ color: '#6b7280' }}>Model:</span> {info.model || '—'}</p>
@@ -139,7 +150,7 @@ export default function Dashboard() {
               { label: 'Total', value: Object.keys(devices).length, color: '#3b82f6' },
               { label: 'Online', value: onlineCount, color: '#22c55e' },
               { label: 'Filtered', value: filtered.length, color: '#f59e0b' },
-              { label: 'Updated', value: new Date().toLocaleTimeString(), color: '#8b5cf6' }
+              { label: 'Updated', value: updatedAt ? new Date(updatedAt).toLocaleTimeString() : '—', color: '#8b5cf6' }
             ].map(s => (
               <div key={s.label} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '12px 18px', flex: '1 1 120px', minWidth: 120 }}>
                 <div style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</div>
@@ -158,20 +169,20 @@ export default function Dashboard() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
             {filtered.map(([uuid, info]) => {
-              const isOnline = info.lastSeen && Date.now() - info.lastSeen < 300000;
+              const isDeviceOnline = isOnline(info);
               return (
                 <div key={uuid} style={{
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
-                  border: `1px solid ${isOnline ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                  border: `1px solid ${isDeviceOnline ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'}`,
                   borderRadius: 14,
                   padding: 22,
                   position: 'relative',
                   overflow: 'hidden'
                 }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: isOnline ? 'linear-gradient(90deg, #22c55e, #22c55e88)' : 'linear-gradient(90deg, #6b7280, #6b728088)' }} />
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: isDeviceOnline ? 'linear-gradient(90deg, #22c55e, #22c55e88)' : 'linear-gradient(90deg, #6b7280, #6b728088)' }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                     <code style={{ color: '#e0e0e0', fontSize: 13, fontWeight: 600, background: 'rgba(255,255,255,0.08)', padding: '4px 10px', borderRadius: 6 }}>{uuid}</code>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: isOnline ? '#22c55e' : '#6b7280', boxShadow: isOnline ? '0 0 10px #22c55eaa' : 'none' }} />
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: isDeviceOnline ? '#22c55e' : '#6b7280', boxShadow: isDeviceOnline ? '0 0 10px #22c55eaa' : 'none' }} />
                   </div>
                   <div style={{ fontSize: 13, lineHeight: 2 }}>
                     {[
