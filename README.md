@@ -1,5 +1,16 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Device sections
+
+The existing root dashboard is preserved. The canonical device sections are:
+
+- `/s24` for `samsung-s24-ultra`
+- `/vivobook` for `jayti-asus-vivobook`
+
+Both sections share one panel component and read from the canonical device API. When `KV_REST_API_URL` and `KV_REST_API_TOKEN` are configured, each successful read is mirrored under `dashboard:device:<canonical-id>:latest` in Vercel KV. If KV is unavailable, the live canonical source remains the read path and the UI reports that storage mode.
+
+Set `DEVICE_DATA_SOURCE_URL` and `DEVICE_HISTORY_SOURCE_URL` only when the canonical API hostname changes. Never place service-account credentials in these variables or in browser code.
+
 ## Getting Started
 
 First, run the development server:
