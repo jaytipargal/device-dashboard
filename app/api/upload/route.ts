@@ -1,16 +1,22 @@
-import { kv } from '@vercel/kv';
 import { NextRequest, NextResponse } from 'next/server';
+import { deviceKey, redis, DEVICE_INDEX_KEY } from '../../../lib/redis';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { uuid, ...payload } = body;
-    if (!uuid) return NextResponse.json({ error: 'Missing uuid' }, { status: 400 });
+    if (!uuid || typeof uuid !== 'string') {
+      return NextResponse.json({ error: 'Missing uuid' }, { status: 400 });
+    }
 
-    const key = `device:${uuid}`;
-    const existing = (await kv.get(key)) || {};
-    const updated = { ...existing, ...payload, lastSeen: Date.now() };
-    await kv.set(key, updated);
+    const key = deviceKey(uuid);
+    const existing = (await redis.get<Record<string, unknown>>(key)) || {};
+    const updated = { ...existing, ...payload, uuid, lastSeen: Date.now() };
+
+    await Promise.all([
+      redis.set(key, updated),
+      redis.sadd(DEVICE_INDEX_KEY, uuid),
+    ]);
 
     return NextResponse.json({ status: 'ok' });
   } catch {
