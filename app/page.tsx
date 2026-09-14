@@ -53,7 +53,6 @@ export default function Dashboard() {
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#e0e0e0', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
 
-      {/* ====== SECTION 1: Quick Dashboard (original) ====== */}
       <header style={{
         background: 'rgba(255,255,255,0.03)',
         backdropFilter: 'blur(20px)',
@@ -81,42 +80,6 @@ export default function Dashboard() {
 
       <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
 
-        {/* ====== SECTION 1: Quick View Cards ====== */}
-        <section style={{ marginBottom: 48 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px' }}>Quick View</h2>
-          {loading && Object.keys(devices).length === 0 && (
-            <p style={{ color: '#6b7280', fontSize: 14 }}>Waiting for devices…</p>
-          )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-            {Object.entries(devices).map(([uuid, info]) => {
-              const isDeviceOnline = isOnline(info);
-              return (
-                <div key={uuid} style={{
-                  border: `1px solid ${isDeviceOnline ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.06)'}`,
-                  borderRadius: 12,
-                  padding: 18,
-                  width: 260,
-                  background: '#12121a',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                  transition: 'transform 0.2s'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                    <code style={{ color: '#0ea5e9', fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: 5 }}>{uuid}</code>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: isDeviceOnline ? '#22c55e' : '#6b7280', boxShadow: isDeviceOnline ? '0 0 8px #22c55eaa' : 'none' }} />
-                  </div>
-                  <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-                    <p><span style={{ color: '#6b7280' }}>Model:</span> {info.model || '—'}</p>
-                    <p><span style={{ color: '#6b7280' }}>IP:</span> {info.ip || '—'}</p>
-                    <p><span style={{ color: '#6b7280' }}>Battery:</span> {info.battery !== undefined ? `${info.battery}%` : '—'}</p>
-                    <p><span style={{ color: '#6b7280' }}>Last seen:</span> {info.lastSeen ? new Date(info.lastSeen).toLocaleString() : '—'}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ====== SECTION 2: Device Data (new, polished) ====== */}
         <section style={{ marginBottom: 48 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
             <h2 style={{ fontSize: 18, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px' }}>
